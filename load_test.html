@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Performance Load Test - Shopping Cart API</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            animation: {
+              "pulse-slow": "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+            },
+          },
+        },
+      };
+    </script>
+  </head>
+  <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-lg border-b border-gray-200">
+      <div class="max-w-6xl mx-auto px-6 py-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <div
+              class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center"
+            >
+              <svg
+                class="w-5 h-5 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M13 10V3L4 14h7v7l9-11h-7z"
+                ></path>
+              </svg>
+            </div>
+            <div>
+              <h1 class="text-2xl font-bold text-gray-900">
+                Performance Load Tester
+              </h1>
+              <p class="text-sm text-gray-600">
+                Shopping Cart API Benchmarking Tool
+              </p>
+            </div>
+          </div>
+          <div class="flex items-center space-x-2">
+            <div
+              class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium"
+            >
+              Server Running
+            </div>
+            <div
+              id="serverStatus"
+              class="w-3 h-3 bg-green-500 rounded-full animate-pulse"
+            ></div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="max-w-6xl mx-auto px-6 py-8">
+      <!-- Main Title Section -->
+      <div class="text-center mb-8">
+        <h2 class="text-4xl font-bold text-gray-900 mb-4">
+          API Performance Testing
+        </h2>
+        <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+          Test the performance impact of NodeCache on your shopping cart API.
+          Compare response times with and without caching enabled.
+        </p>
+      </div>
+      <!-- Test Configuration Card -->
+      <div
+        class="bg-white rounded-xl shadow-lg border border-gray-200 mb-8 overflow-hidden"
+      >
+        <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
+          <div class="flex items-center space-x-3">
+            <svg
+              class="w-6 h-6 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"
+              ></path>
+            </svg>
+            <h2 class="text-xl font-semibold text-white">Test Configuration</h2>
+          </div>
+        </div>
+
+        <div class="p-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="space-y-2">
+              <label class="block text-sm font-semibold text-gray-700">
+                Number of Concurrent Requests
+              </label>
+              <div class="relative">
+                <input
+                  id="requestCount"
+                  type="number"
+                  value="100"
+                  min="1"
+                  max="1000"
+                  class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-lg font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+                  placeholder="Enter request count"
+                />
+                <div
+                  class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M7 4V2C7 1.45 7.45 1 8 1H16C16.55 1 17 1.45 17 2V4H20C20.55 4 21 4.45 21 5S20.55 6 20 6H19V19C19 20.1 18.1 21 17 21H7C5.9 21 5 20.1 5 19V6H4C3.45 6 3 5.55 3 5S3.45 4 4 4H7Z"
+                  ></path>
+                </div>
+              </div>
+              <p class="text-xs text-gray-500">
+                Recommended: 50-200 for accurate results
+              </p>
+            </div>
+
+            <div class="space-y-2">
+              <label class="block text-sm font-semibold text-gray-700">
+                Product ID to Test
+              </label>
+              <div class="relative">
+                <select
+                  id="productId"
+                  class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-lg font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 appearance-none bg-white"
+                >
+                  <option value="1">Product 1 - Wireless Headphones</option>
+                  <option value="2">Product 2 - Smartphone Case</option>
+                  <option value="3">Product 3 - Bluetooth Speaker</option>
+                  <option value="4">Product 4 - Laptop Stand</option>
+                  <option value="5">Product 5 - USB-C Cable</option>
+                  <option value="6">Product 6 - Wireless Mouse</option>
+                  <option value="7">Product 7 - Keyboard</option>
+                  <option value="8">Product 8 - Monitor</option>
+                  <option value="9">Product 9 - Webcam</option>
+                  <option value="10">Product 10 - Power Bank</option>
+                </select>
+                <div
+                  class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"
+                >
+                  <svg
+                    class="w-5 h-5 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 9l-7 7-7-7"
+                    ></path>
+                  </svg>
+                </div>
+              </div>
+              <p class="text-xs text-gray-500">
+                Select any product from the sample data
+              </p>
+            </div>
+          </div>
+
+          <div class="flex flex-col sm:flex-row gap-4">
+            <button
+              id="runTest"
+              onclick="runLoadTest()"
+              class="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-4 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 hover:shadow-lg flex items-center justify-center space-x-2"
+            >
+              <svg
+                class="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M13 10V3L4 14h7v7l9-11h-7z"
+                ></path>
+              </svg>
+              <span>Run Load Test</span>
+            </button>
+
+            <button
+              id="clearCache"
+              onclick="clearCache()"
+              class="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold py-4 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 hover:shadow-lg flex items-center justify-center space-x-2"
+            >
+              <svg
+                class="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                ></path>
+              </svg>
+              <span>Clear Cache</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- Results Section -->
+      <div
+        id="results"
+        class="bg-white rounded-xl shadow-lg border border-gray-200 mb-8 overflow-hidden"
+      >
+        <div class="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4">
+          <div class="flex items-center space-x-3">
+            <svg
+              class="w-6 h-6 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+              ></path>
+            </svg>
+            <h2 class="text-xl font-semibold text-white">
+              Performance Test Results
+            </h2>
+          </div>
+        </div>
+
+        <div class="p-6">
+          <div id="resultsContent">
+            <div class="flex flex-col items-center justify-center py-12">
+              <div
+                class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4"
+              >
+                <svg
+                  class="w-8 h-8 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M13 10V3L4 14h7v7l9-11h-7z"
+                  ></path>
+                </svg>
+              </div>
+              <h3 class="text-lg font-semibold text-gray-700 mb-2">
+                Ready to Test
+              </h3>
+              <p class="text-gray-500 text-center max-w-md">
+                Configure your test parameters above and click "Run Load Test"
+                to begin performance analysis.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Performance Metrics Info -->
+      <div
+        class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden"
+      >
+        <div class="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-4">
+          <div class="flex items-center space-x-3">
+            <svg
+              class="w-6 h-6 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              ></path>
+            </svg>
+            <h3 class="text-xl font-semibold text-white">
+              Expected Performance Metrics
+            </h3>
+          </div>
+        </div>
+
+        <div class="p-6">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Without Cache -->
+            <div class="space-y-4">
+              <div class="flex items-center space-x-3 mb-4">
+                <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+                <h4 class="text-lg font-semibold text-gray-800">
+                  Without Cache (Cold Start)
+                </h4>
+              </div>
+
+              <div class="space-y-3">
+                <div
+                  class="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-200"
+                >
+                  <span class="text-sm font-medium text-gray-700"
+                    >Response Time</span
+                  >
+                  <span class="text-sm font-bold text-red-600">~150ms</span>
+                </div>
+                <div
+                  class="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-200"
+                >
+                  <span class="text-sm font-medium text-gray-700"
+                    >Database Queries</span
+                  >
+                  <span class="text-sm font-bold text-red-600"
+                    >100 (1 per request)</span
+                  >
+                </div>
+                <div
+                  class="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-200"
+                >
+                  <span class="text-sm font-medium text-gray-700"
+                    >Cache Hits</span
+                  >
+                  <span class="text-sm font-bold text-red-600">0%</span>
+                </div>
+              </div>
+
+              <div class="mt-4 p-4 bg-gray-50 rounded-lg">
+                <p class="text-xs text-gray-600">
+                  <strong>Note:</strong> Each request requires a database query,
+                  resulting in higher latency and increased server load.
+                </p>
+              </div>
+            </div>
+
+            <!-- With Cache -->
+            <div class="space-y-4">
+              <div class="flex items-center space-x-3 mb-4">
+                <div
+                  class="w-3 h-3 bg-green-500 rounded-full animate-pulse"
+                ></div>
+                <h4 class="text-lg font-semibold text-gray-800">
+                  With NodeCache (Optimized)
+                </h4>
+              </div>
+
+              <div class="space-y-3">
+                <div
+                  class="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200"
+                >
+                  <span class="text-sm font-medium text-gray-700"
+                    >Response Time</span
+                  >
+                  <span class="text-sm font-bold text-green-600">~30ms</span>
+                </div>
+                <div
+                  class="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200"
+                >
+                  <span class="text-sm font-medium text-gray-700"
+                    >Database Queries</span
+                  >
+                  <span class="text-sm font-bold text-green-600"
+                    >~1-2 total</span
+                  >
+                </div>
+                <div
+                  class="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200"
+                >
+                  <span class="text-sm font-medium text-gray-700"
+                    >Cache Hits</span
+                  >
+                  <span class="text-sm font-bold text-green-600">98-99%</span>
+                </div>
+              </div>
+
+              <div
+                class="mt-4 p-4 bg-green-50 rounded-lg border border-green-200"
+              >
+                <p class="text-xs text-gray-600">
+                  <strong>Performance Gain:</strong> ~5x faster response times
+                  with 99% reduction in database queries.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Performance Tips -->
+          <div class="mt-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
+            <div class="flex items-start space-x-3">
+              <svg
+                class="w-6 h-6 text-blue-600 mt-0.5 flex-shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                ></path>
+              </svg>
+              <div>
+                <h4 class="text-sm font-semibold text-blue-800 mb-2">
+                  Testing Tips
+                </h4>
+                <ul class="text-xs text-blue-700 space-y-1">
+                  <li>
+                    • Run the test twice to see the cache performance difference
+                  </li>
+                  <li>
+                    • Use 50-200 requests for reliable performance measurements
+                  </li>
+                  <li>
+                    • Clear cache between tests to compare cold vs warm
+                    performance
+                  </li>
+                  <li>• Monitor both response time and throughput metrics</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let testResults = [];
+      async function runLoadTest() {
+        const requestCount = parseInt(
+          document.getElementById("requestCount").value
+        );
+        const productId = parseInt(document.getElementById("productId").value);
+        const button = document.getElementById("runTest");
+
+        // Update button state
+        button.disabled = true;
+        button.innerHTML = `
+          <svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          <span>Running Test...</span>
+        `;
+
+        updateResults(
+          `
+          <div class="flex items-center justify-center py-8">
+            <div class="flex items-center space-x-3">
+              <svg class="w-8 h-8 text-blue-600 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+              </svg>
+              <div>
+                <p class="text-lg font-semibold text-gray-700">Running Performance Test</p>
+                <p class="text-sm text-gray-500">Sending ${requestCount} concurrent requests...</p>
+              </div>
+            </div>
+          </div>
+        `,
+          true
+        );
+
+        const startTime = Date.now();
+        const promises = [];
+
+        // Create concurrent requests
+        for (let i = 0; i < requestCount; i++) {
+          promises.push(
+            fetch(`/api/test-performance/${productId}`)
+              .then((response) => response.json())
+              .catch((error) => ({ error: error.message }))
+          );
+        }
+
+        try {
+          const results = await Promise.all(promises);
+          const endTime = Date.now();
+
+          analyzeResults(results, endTime - startTime, requestCount);
+        } catch (error) {
+          updateResults(
+            `
+            <div class="flex items-center justify-center py-8">
+              <div class="text-center">
+                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                </div>
+                <h3 class="text-lg font-semibold text-red-600 mb-2">Test Failed</h3>
+                <p class="text-gray-600">${error.message}</p>
+              </div>
+            </div>
+          `,
+            false
+          );
+        }
+
+        // Reset button
+        button.disabled = false;
+        button.innerHTML = `
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+          </svg>
+          <span>Run Load Test</span>
+        `;
+      }
+
+      function analyzeResults(results, totalTime, requestCount) {
+        const successfulResults = results.filter((r) => !r.error);
+        const cacheHits = successfulResults.filter((r) => r.fromCache).length;
+        const avgResponseTime =
+          successfulResults.reduce((sum, r) => sum + r.responseTime, 0) /
+          successfulResults.length;
+        const minResponseTime = Math.min(
+          ...successfulResults.map((r) => r.responseTime)
+        );
+        const maxResponseTime = Math.max(
+          ...successfulResults.map((r) => r.responseTime)
+        );
+
+        const analysis = {
+          timestamp: new Date().toISOString(),
+          totalRequests: requestCount,
+          successfulRequests: successfulResults.length,
+          failedRequests: results.length - successfulResults.length,
+          totalTime: totalTime,
+          avgResponseTime: Math.round(avgResponseTime * 100) / 100,
+          minResponseTime,
+          maxResponseTime,
+          cacheHits,
+          cacheHitRate: Math.round(
+            (cacheHits / successfulResults.length) * 100
+          ),
+          requestsPerSecond:
+            Math.round((requestCount / totalTime) * 1000 * 100) / 100,
+        };
+
+        testResults.push(analysis);
+        displayResults(analysis);
+      }
+      function displayResults(analysis) {
+        const performanceGrade = getPerformanceGrade(analysis.avgResponseTime);
+        const cacheEfficiency = getCacheEfficiency(analysis.cacheHitRate);
+
+        const html = `
+          <div class="space-y-6">
+            <!-- Test Summary Header -->
+            <div class="bg-gradient-to-r from-green-50 to-blue-50 border-l-4 border-green-500 p-6 rounded-lg">
+              <div class="flex items-center justify-between mb-4">
+                <div>
+                  <h3 class="text-xl font-bold text-gray-800">Test Completed Successfully</h3>
+                  <p class="text-sm text-gray-600">${analysis.timestamp}</p>
+                </div>
+                <div class="text-right">
+                  <div class="text-2xl font-bold ${performanceGrade.color}">${
+          performanceGrade.grade
+        }</div>
+                  <div class="text-xs text-gray-500">Performance Grade</div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Key Metrics Grid -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl border border-blue-200">
+                <div class="flex items-center justify-between mb-2">
+                  <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                </div>
+                <div class="text-3xl font-bold text-blue-700 mb-1">${
+                  analysis.avgResponseTime
+                }ms</div>
+                <div class="text-sm text-blue-600 font-medium">Avg Response Time</div>
+              </div>
+              
+              <div class="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl border border-green-200">
+                <div class="flex items-center justify-between mb-2">
+                  <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                  </svg>
+                </div>
+                <div class="text-3xl font-bold text-green-700 mb-1">${
+                  analysis.cacheHitRate
+                }%</div>
+                <div class="text-sm text-green-600 font-medium">Cache Hit Rate</div>
+                <div class="text-xs text-green-500 mt-1">${cacheEfficiency}</div>
+              </div>
+              
+              <div class="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-xl border border-purple-200">
+                <div class="flex items-center justify-between mb-2">
+                  <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                  </svg>
+                </div>
+                <div class="text-3xl font-bold text-purple-700 mb-1">${
+                  analysis.requestsPerSecond
+                }</div>
+                <div class="text-sm text-purple-600 font-medium">Requests/Second</div>
+              </div>
+              
+              <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 p-6 rounded-xl border border-yellow-200">
+                <div class="flex items-center justify-between mb-2">
+                  <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                </div>
+                <div class="text-3xl font-bold text-yellow-700 mb-1">${
+                  analysis.successfulRequests
+                }/${analysis.totalRequests}</div>
+                <div class="text-sm text-yellow-600 font-medium">Success Rate</div>
+                <div class="text-xs text-yellow-500 mt-1">${Math.round(
+                  (analysis.successfulRequests / analysis.totalRequests) * 100
+                )}%</div>
+              </div>
+            </div>
+            
+            <!-- Detailed Metrics -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div class="bg-white p-6 rounded-lg border border-gray-200">
+                <h4 class="font-semibold text-gray-800 mb-4 flex items-center">
+                  <svg class="w-5 h-5 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  Response Times
+                </h4>
+                <div class="space-y-3">
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Minimum:</span>
+                    <span class="font-mono font-semibold text-gray-800">${
+                      analysis.minResponseTime
+                    }ms</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Maximum:</span>
+                    <span class="font-mono font-semibold text-gray-800">${
+                      analysis.maxResponseTime
+                    }ms</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Average:</span>
+                    <span class="font-mono font-semibold text-gray-800">${
+                      analysis.avgResponseTime
+                    }ms</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="bg-white p-6 rounded-lg border border-gray-200">
+                <h4 class="font-semibold text-gray-800 mb-4 flex items-center">
+                  <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                  </svg>
+                  Cache Performance
+                </h4>
+                <div class="space-y-3">
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Cache Hits:</span>
+                    <span class="font-mono font-semibold text-green-600">${
+                      analysis.cacheHits
+                    }</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Cache Misses:</span>
+                    <span class="font-mono font-semibold text-red-600">${
+                      analysis.successfulRequests - analysis.cacheHits
+                    }</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Hit Rate:</span>
+                    <span class="font-mono font-semibold text-gray-800">${
+                      analysis.cacheHitRate
+                    }%</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="bg-white p-6 rounded-lg border border-gray-200">
+                <h4 class="font-semibold text-gray-800 mb-4 flex items-center">
+                  <svg class="w-5 h-5 text-purple-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                  </svg>
+                  Overall Performance
+                </h4>
+                <div class="space-y-3">
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Total Time:</span>
+                    <span class="font-mono font-semibold text-gray-800">${
+                      analysis.totalTime
+                    }ms</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Failed Requests:</span>
+                    <span class="font-mono font-semibold ${
+                      analysis.failedRequests > 0
+                        ? "text-red-600"
+                        : "text-green-600"
+                    }">${analysis.failedRequests}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Throughput:</span>
+                    <span class="font-mono font-semibold text-gray-800">${
+                      analysis.requestsPerSecond
+                    } req/s</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            ${testResults.length > 1 ? generateComparison() : ""}
+          </div>
+        `;
+
+        updateResults(html, false);
+      }
+
+      function getPerformanceGrade(avgResponseTime) {
+        if (avgResponseTime < 50)
+          return { grade: "A+", color: "text-green-600" };
+        if (avgResponseTime < 100)
+          return { grade: "A", color: "text-green-500" };
+        if (avgResponseTime < 200)
+          return { grade: "B", color: "text-yellow-500" };
+        if (avgResponseTime < 500)
+          return { grade: "C", color: "text-orange-500" };
+        return { grade: "D", color: "text-red-500" };
+      }
+
+      function getCacheEfficiency(cacheHitRate) {
+        if (cacheHitRate >= 95) return "Excellent";
+        if (cacheHitRate >= 80) return "Good";
+        if (cacheHitRate >= 50) return "Fair";
+        return "Poor";
+      }
+      function generateComparison() {
+        if (testResults.length < 2) return "";
+
+        const current = testResults[testResults.length - 1];
+        const previous = testResults[testResults.length - 2];
+
+        const responseTimeDiff =
+          current.avgResponseTime - previous.avgResponseTime;
+        const cacheHitDiff = current.cacheHitRate - previous.cacheHitRate;
+        const throughputDiff =
+          current.requestsPerSecond - previous.requestsPerSecond;
+
+        return `
+          <div class="mt-6 bg-gradient-to-r from-gray-50 to-blue-50 p-6 rounded-xl border border-gray-200">
+            <div class="flex items-center space-x-3 mb-4">
+              <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+              </svg>
+              <h4 class="text-lg font-semibold text-gray-800">Comparison with Previous Test</h4>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="bg-white p-4 rounded-lg border">
+                <div class="text-sm font-medium text-gray-600 mb-2">Response Time Change</div>
+                <div class="flex items-center space-x-2">
+                  <span class="text-lg font-bold ${
+                    responseTimeDiff <= 0 ? "text-green-600" : "text-red-600"
+                  }">
+                    ${
+                      responseTimeDiff > 0 ? "+" : ""
+                    }${responseTimeDiff.toFixed(2)}ms
+                  </span>
+                  ${
+                    responseTimeDiff <= 0
+                      ? '<svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>'
+                      : '<svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path></svg>'
+                  }
+                </div>
+              </div>
+              
+              <div class="bg-white p-4 rounded-lg border">
+                <div class="text-sm font-medium text-gray-600 mb-2">Cache Hit Rate Change</div>
+                <div class="flex items-center space-x-2">
+                  <span class="text-lg font-bold ${
+                    cacheHitDiff >= 0 ? "text-green-600" : "text-red-600"
+                  }">
+                    ${cacheHitDiff > 0 ? "+" : ""}${cacheHitDiff}%
+                  </span>
+                  ${
+                    cacheHitDiff >= 0
+                      ? '<svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>'
+                      : '<svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path></svg>'
+                  }
+                </div>
+              </div>
+              
+              <div class="bg-white p-4 rounded-lg border">
+                <div class="text-sm font-medium text-gray-600 mb-2">Throughput Change</div>
+                <div class="flex items-center space-x-2">
+                  <span class="text-lg font-bold ${
+                    throughputDiff >= 0 ? "text-green-600" : "text-red-600"
+                  }">
+                    ${throughputDiff > 0 ? "+" : ""}${throughputDiff.toFixed(
+          2
+        )} req/s
+                  </span>
+                  ${
+                    throughputDiff >= 0
+                      ? '<svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>'
+                      : '<svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path></svg>'
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      function updateResults(content, isLoading) {
+        const resultsContent = document.getElementById("resultsContent");
+        if (isLoading) {
+          resultsContent.innerHTML = content;
+        } else {
+          resultsContent.innerHTML = content;
+        }
+      }
+
+      async function clearCache() {
+        const button = document.getElementById("clearCache");
+        const originalContent = button.innerHTML;
+
+        try {
+          button.disabled = true;
+          button.innerHTML = `
+            <svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            <span>Clearing...</span>
+          `;
+
+          updateResults(
+            `
+            <div class="flex items-center justify-center py-8">
+              <div class="text-center">
+                <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                  </svg>
+                </div>
+                <h3 class="text-lg font-semibold text-yellow-700 mb-2">Cache Clear Notice</h3>
+                <p class="text-gray-600 max-w-md mx-auto">
+                  Cache clearing is not implemented in this demo. To clear the NodeCache completely, restart the server.
+                </p>
+              </div>
+            </div>
+          `,
+            true
+          );
+
+          setTimeout(() => {
+            updateResults(
+              `
+              <div class="flex items-center justify-center py-8">
+                <div class="text-center">
+                  <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                  </div>
+                  <h3 class="text-lg font-semibold text-blue-700 mb-2">Production Implementation</h3>
+                  <p class="text-gray-600 max-w-md mx-auto">
+                    In a production environment, you would implement a dedicated cache clearing endpoint with proper authentication and monitoring.
+                  </p>
+                </div>
+              </div>
+            `,
+              false
+            );
+          }, 2000);
+        } catch (error) {
+          updateResults(
+            `
+            <div class="flex items-center justify-center py-8">
+              <div class="text-center">
+                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                </div>
+                <h3 class="text-lg font-semibold text-red-600 mb-2">Error</h3>
+                <p class="text-gray-600">${error.message}</p>
+              </div>
+            </div>
+          `,
+            false
+          );
+        } finally {
+          button.disabled = false;
+          button.innerHTML = originalContent;
+        }
+      }
+    </script>
+  </body>
+</html>
